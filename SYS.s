@@ -45,19 +45,28 @@ disk_error_:
   jmp load
 
 disk_error:
+  /*
   mov $diskerror, %si
   call writeString
   call newLine
+  */
   call reboot
-
+  
 disk_read:
+  /*
   mov $diskok, %si
   call writeString
   call newLine
+  */
+
+   
+  mov $'L', %al
+  call putchar
+
   jmp mbr_layout
 
 mbr_layout:
-
+  
   push %ds
   push %ds
   
@@ -137,6 +146,11 @@ mbr_load_stack:
   movw 14(%di), %dx
   push %dx
 
+   
+  mov $'D', %al
+  call putchar
+
+  
   /*
   #call print_partition_entry
   dec %cx
@@ -173,9 +187,13 @@ mbr_print:
 
 .func reboot
 reboot:
+  /*
   mov $rebootmsj, %si
   call writeString
-
+  */
+  mov 'R', %al
+  call putchar
+  
   xor %ax, %ax
   int $0x16
   .byte  0xEA             # machine language to jump to FFFF:0000 (reboot)

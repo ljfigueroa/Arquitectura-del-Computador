@@ -28,8 +28,9 @@ nl:
   
 .func print_hex
 print_hex:
+  push %ds
   pusha
-#  push %ds
+ 
   push %dx
   mov $'0', %dl
   call putchar_
@@ -65,11 +66,11 @@ digit:
   jmp loop
 
 fin:
- # pop %ds
   popa
+  pop %ds
   ret
 .endfunc
-/*
+
 .func putchar
 putchar:
   mov $0xE, %ah 
@@ -77,7 +78,7 @@ putchar:
   int $0x10
   ret
 .endfunc
-
+/*
 .func print_
 print_:
   pusha
@@ -103,10 +104,10 @@ print_done:
 */
 .func putchar_
 putchar_:
-  #push %ds
-  pusha
-
   
+  pusha
+  mov %ds, %bx          # salvo ds
+
   /* Calculo la pos */ 
   mov (cPos), %di
 
@@ -121,7 +122,7 @@ putchar_:
 
   /* Preparo la pos para el siguiente
   carater */
-  #pop %ds
+  mov %bx, %ds              # restauro ds
   inc %di
   mov %di, (cPos)
 
@@ -132,12 +133,10 @@ putchar_:
 
 .func writeString
 writeString:
-  #push %ds
+  push %ds
   pusha
 
   xor %di, %di
-  mov $0xb800, %ax
-  mov %ax, %ds
 move_:
   xor %dx, %dx
   mov %cs:(%si), %dl
@@ -149,14 +148,14 @@ move_:
   jmp move_
 print_string_done:
   popa
-  #pop %ds
+  pop %ds
   ret
 .endfunc
 
 
 .func screen
 screen:
-  #push %ds
+  push %ds
   pusha
   
   mov $2000, %cx
@@ -172,7 +171,7 @@ screen_done:
   mov %ax, (cPos)
   
   popa
-  #pop %ds
+  pop %ds
   ret
 .endfunc
   
@@ -188,6 +187,7 @@ newLine:
   sub %dx, %bx
   add %bx, %cx
   mov %cx, (cPos)
+
   
   ret 
 .endfunc
