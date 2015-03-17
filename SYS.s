@@ -4,25 +4,8 @@
 .func get_mbr
 get_mbr:
   pusha
-  /*
-  xor %ax,     %ax
-  mov %ax,     %es  #es = 0x0000
-  mov $0x8000, %bx  # copiar a la dir 0x0000:0x8000
-  mov $2,      %cx  # empezar del sector 2
-  mov $1,      %al  # sectores a leer, el minimo es 1
-  mov $0x2,    %ah  # leer del disco en modo chs
-  mov $0x80,   %dl  
-  int $0x13
-  */
-
-  /*
-  lea  test, %si
-  call writeString
-  call newLine
-  */
   
-  push %es
-
+  
 load:
   mov $0x0980, %ax  # Donde termina el stack
   mov %ax, %es
@@ -55,26 +38,20 @@ disk_error:
   
 disk_read:
 
-  #pop %es
-
   lea diskread, %si
   call writeString
   call newLine
-
   
   lea Tabla, %si
   call writeString
-  
-  
+    
   call newLine
   jmp mbr_layout
 
 mbr_layout:
   
   push %ds
-  
-
-  
+    
   mov $0x0980, %ax
   mov %ax, %es
   mov %ax, %ds
@@ -85,11 +62,10 @@ mbr_load_stack:
 
   mov $0, %cx
   
-  #push %cx
 mbr_print:
-  mov $446, %di
   /* 446 - 494 */
-  #pop %cx
+  mov $446, %di
+  
   cmp $4, %cx
   je mbr_print_fin
   push %cx
@@ -98,16 +74,6 @@ mbr_print:
   mul %bx
   add %ax, %di
   
-  #add $1, %si
-
-  
-  #lea (%bx,%di,1), %di
-  #mov %ds, %ax
-  #pop %ds
-  #push %cx
-  #push %ds
-  #push %ds
-  #mov %ax, %ds #*/
 testprint:   
 
   /* Booteable */
@@ -118,33 +84,18 @@ testprint:
   cmp $0x80, %al
   jne notequal
 
-  
-  #mov %ds, %bx
-  #pop %ds
-  #push %ds
   push %ds
   mov $0, %bx
   mov %bx, %ds
   mov $'*', %dl
   call putchar_
-  #mov %bx, %ds
   pop %ds
   
 notequal:
 
   /* Start */
-/*
-  mov $0xFFFF, %ax
-  mov $0xFFFF, %dx
-  mov $10, %bx
-
-  div %bx
-*/
   
   /* Formato */
-  #pop %ds
-  #push %ds
-  #push %bx
   push %ds
   mov $0, %ax
   mov %ax, %ds
@@ -165,25 +116,15 @@ start:
   movw 8(%di), %ax
   movw 10(%di), %dx
 
-  #mov $0, %dx
-  #mov $100, %ax
-
-  #mov %ds, %bx
-  #pop %ds
   push %ds
   mov $0, %bx
   mov %bx, %ds
   call print_num
- 
-  #mov %bx, %ds
   pop %ds
 
   /* End */
 
   /* Formato */
-  #pop %ds
-  #push %ds
-  #push %bx
   push %ds
   mov $0, %bx
   mov %bx, %ds
@@ -195,16 +136,11 @@ start:
   mul %bx
   add $42, %ax
   mov %ax, (cPos)
-  #pop %bx
-  #mov %bx, %ds
   pop %ds
 
 end:  
   movw 8(%di), %ax
   movw 10(%di), %dx
-
-  #mov $0, %dx
-  #mov $100, %ax
 
   movw 12(%di), %bx
   movw 14(%di), %cx
@@ -217,21 +153,15 @@ end:
   dec %dx
 no_cero:
   
-  #mov %ds, %bx
-  #pop %ds
   push %ds
   mov $0, %bx
   mov %bx, %ds
   call print_num
-  #mov %bx, %ds
   pop %ds 
 
   /* Sectors */
 
   /* Formato */
-  #pop %ds
-  #push %ds
-  #push %bx
   push %ds
   mov $0, %bx
   mov %bx, %ds
@@ -243,27 +173,19 @@ no_cero:
   mul %bx
   add $70, %ax
   mov %ax, (cPos)
-  #pop %bx
-  #mov %bx, %ds
   pop %ds
   
   movw 12(%di), %ax
   movw 14(%di), %dx
     
-  #pop %ds
-  #push %ds
   push %ds
   mov $0, %bx
   mov %bx, %ds
   call print_num
-  #mov %bx, %ds
   pop %ds
   /* ID */
 
   /* Formato */
-  #pop %ds
-  #push %ds
-  #push %bx
   push %ds
   mov $0, %bx
   mov %bx, %ds
@@ -275,21 +197,15 @@ no_cero:
   mul %bx
   add $100, %ax
   mov %ax, (cPos)
-  #pop %bx
-  #mov %bx, %ds
   pop %ds
   
   mov $0, %ax
   movb 4(%di), %al
   mov $0, %dx
     
-  #pop %ds
-  #push %ds
   push %ds
   mov $0, %bx
   mov %bx, %ds
-  #call print_num
-  #mov %bx, %ds
 testss: 
   push %cx
   mov $2, %cx
@@ -306,64 +222,6 @@ fin_linea:
   jmp mbr_print
 
 
-
-  mov $0, %bx
-  mov %bx, %ds
-  mov $'D', %dl
-  call putchar_
-
-  
-  /*
-  mov $7, %al
-  call putnum_
-  */
-  
-  /*
-  #call print_partition_entry
-  dec %cx
-  cmp $0, %cx
-  jz mbr_print_done
-  add $16, %di
-  jmp mbr_print
-  */
-mbr_print2:
-
-  
-  
-  /*
-  mov %ax, %ds
-  
-  lea mbr_LBA_Sectors, %si
-  call writeString
-  */
-  /*
-  pop %ax
-  mov %ah, %dl
-  mov %al, %dh
-
-  pop %ax
-  mov %ah, %bl
-  mov %al, %bh
-  
-  pop %ax
-  pop %ax
-  
-  
- 
-  mov $0, %dx
-  call print_num
-
-  mov $'D', %dl
-  call putchar_
-  
-  /*
-  mov $4, %cx
-  call print_hex
-  mov %bx, %dx
-  call print_hex
-
-  /* FIN  */
-
 mbr_print_fin:
   
   popa
@@ -373,12 +231,10 @@ mbr_print_fin:
 
 .func reboot
 reboot:
-  /*
+ 
   mov $rebootmsj, %si
   call writeString
-  */
-  mov 'R', %al
-#  call putchar
+ 
   
   xor %ax, %ax
   int $0x16

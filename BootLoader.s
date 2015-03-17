@@ -12,12 +12,12 @@ _start:
   /* Creando el stack  */
   mov $0x0900, %ax
   mov %ax, %ss
-  mov $0x800, %sp    # 4k de stack
+  mov $0x800, %sp       # 4k de stack
   mov %sp, %bp
   sti
   
   push %ds
-  call screen       # limpio la pantalla
+  call screen           # limpio la pantalla
   
   lea BootMsj, %si
   call writeString

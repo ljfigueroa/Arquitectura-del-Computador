@@ -24,19 +24,6 @@ smbr:
   call writeString
   call newLine
 
-  /*
-tdiv: 
-  mov $0x1, %dx
-  mov $0x1, %ax
-
-  dec %ax
-  jns sarasa
-  dec %dx
-sarasa:
-  
-  mov $10, %bx
-  mov $11, %bx
-*/  
   call get_mbr
 
 idle:
@@ -64,16 +51,3 @@ diskread:
   .asciz "Disco leido"
 Tabla:
   .asciz "Boot  Start          End           Sectors          Size Id"
-Boot:
-  .asciz "Boot "
-Start:
-  .asciz "Start "
-End:
-  .asciz "End "
-Sectors:
-  .asciz "Sectors "
-Size:
-  .asciz "Size "
-Id:
-  .asciz "Id "
-
