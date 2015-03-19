@@ -14,16 +14,16 @@ _start:
   mov $0x800, %sp    # 4k de stack
   mov %sp, %bp
   sti
-
   
 smbr:
 
   mov $0, %ax
   
-  mov $boot2, %si
-  call writeString
-  call newLine
+  #mov $boot2, %si
+  #call writeString
+  #call newLine
 
+  /* Cargo en memoria e imprimo la MBR */
   call get_mbr
 
 idle:
@@ -40,14 +40,14 @@ bootdrive:
   .int 0x65
 /* Mensajes */
 boot2:   
-  .asciz "Segunda parte cargada en memoria"
+  .asciz "Ejecutando codigo de la segunda parte"
 rebootmsj:   
   .asciz "Apretar alguna tecla para reiniciar"
 diskerror:
   .asciz "ERROR AL LEER EL DISCO"
 diskok:
-  .asciz "Cargando MBR en 0x8000"
+  .asciz "Cargando MBR en 0x9800:0000"
 diskread:
   .asciz "Disco leido"
 Tabla:
-  .asciz "Boot  Start          End           Sectors          Size Id"
+  .asciz "Boot  Start          End           Sectors        Size   Id"

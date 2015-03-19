@@ -1,30 +1,33 @@
 .code16
 .text
-  
+
+/* Representa un byte como su equivalente hexadecimal,
+ * eliminando de existir cero a la izquierda */
 .func print_hex
 print_hex:
+  /* Guardo los valores de los registros */
   push %ds
   pusha
 
   mov $2, %cx
-fst:
+high_nibble:
   dec %cx
   mov $0x00f0, %ax
   and %dx, %ax
   push %dx
   shr $4, %ax
   cmp $0, %ax
-  je snd
-  jmp des
-snd:  
+  je low_nibble
+  jmp letter_or_digit
+low_nibble:  
   cmp $0, %cx
-  je fin
+  je print_hex_end
   dec %cx
   mov $0x000f, %ax
   pop %dx
   and %dx, %ax
     
-des:  
+letter_or_digit:  
   cmp $9, %al
   jbe digit
 letter:
@@ -33,44 +36,49 @@ letter:
   mov %al, %dl
   call putchar_
   pop %ds
-  jmp snd
+  jmp low_nibble
 digit:
   push %ds
   add $48, %al
   mov %al, %dl
   call putchar_
   pop %ds
-  jmp snd
+  jmp low_nibble
 
-fin:
+print_hex_end:
   popa
   pop %ds
   ret
 .endfunc
 
+/* Modulo/Division entera de un numero de 32bits por otro de 16bit
+ * donde el resultado de dividir puede ser de 32bits. Dado un numero
+ * en %dx:%ax como dividendo y como divisor %bx, el cociente se
+ * devuelve en %dx:%ax y el resto en %bx */
 .func div32
 div32:
+
   push %ax
 
-  /* */
   mov %dx, %ax  
   mov $0, %dx   # 0000:dx
   div %bx
-  mov %ax, %si  # dx:
-  pop %ax       # mod:ax
+  mov %ax, %si  # cociente, futuro dx
+  pop %ax       # (resto de la div anteriror):ax
   div %bx        
-  mov %dx, %bx  # resto
+  mov %dx, %bx  # resto 
   mov %si, %dx  # dx:ax = div
 
   ret
 .endfunc
 
-
+/* Imprime números en representación decimal */
 .func print_num
 print_num:
   pusha
 
   mov $0, %cx
+  /* loop1 cumple la función de calcular los ceros izquierda */
 loop1:
   cmp $0, %dx
   je loop2
@@ -140,41 +148,45 @@ putchar_:
   ret
 .endfunc
 
+/* Imprime una cadena asciz utilizando
+ mapeo de memoria */
 .func writeString
 writeString:
   push %ds
   pusha
 
   xor %di, %di
-move_:
+read_char:
   xor %dx, %dx
+  /* Muevo un byte apuntado por %si en el code segment hacia %dl */
   mov %cs:(%si), %dl
   cmp $0, %dl
-
-  jz print_string_done
+  /* Las cadenas son asciz terminan con byte null, ie, 0*/
+  jz print_string_end
   call putchar_
   inc %si
-  jmp move_
-print_string_done:
+  jmp read_char
+print_string_end:
   popa
   pop %ds
   ret
 .endfunc
 
-.func screen
-screen:
+
+.func clear_screen
+clear_screen:
   push %ds
   pusha
   
   mov $2000, %cx
-loop_:
+clear_screen_loop:
   cmp $0, %cx
-  jz screen_done
+  jz clear_screen_done
   mov $' ', %dl
   call putchar_
   dec %cx
-  jmp loop_
-screen_done:
+  jmp clear_screen_loop
+clear_screen_done:
   mov $0, %ax
   mov %ax, (cPos)
   

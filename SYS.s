@@ -4,9 +4,9 @@
 .func get_mbr
 get_mbr:
   pusha
-  
-  
-load:
+
+  /* Cargo el MBR en memoria */
+load_MBR:
   mov $0x0980, %ax  # Donde termina el stack
   mov %ax, %es
   mov $0, %bx       # 0x9800:0000 dir a cargar el mbr
@@ -26,8 +26,9 @@ disk_error_:
   int $0x13
   
   jc disk_error_
-  jmp load
+  jmp load_MBR
 
+/*
 disk_error:
   
   mov $diskerror, %si
@@ -35,13 +36,15 @@ disk_error:
   call newLine
   
   call reboot
-  
+*/  
 disk_read:
 
-  lea diskread, %si
-  call writeString
+  #lea diskread, %si
+  #call writeString
+  #call newLine
+
   call newLine
-  
+    
   lea Tabla, %si
   call writeString
     
@@ -53,7 +56,7 @@ mbr_layout:
   push %ds
     
   mov $0x0980, %ax
-  mov %ax, %es
+  #mov %ax, %es
   mov %ax, %ds
   
   mov $4, %cx       # 4 particiones a imprimir
@@ -183,7 +186,8 @@ no_cero:
   mov %bx, %ds
   call print_num
   pop %ds
-  /* ID */
+
+  /* Tamaño */
 
   /* Formato */
   push %ds
@@ -196,6 +200,54 @@ no_cero:
   mov $160, %bx
   mul %bx
   add $100, %ax
+  mov %ax, (cPos)
+  pop %ds
+
+  push %cx
+  movw 12(%di), %ax
+  movw 14(%di), %dx
+  mov $2048, %bx
+  call div32
+  mov $'M', %si
+  push %si
+  cmp $1000, %ax  
+  jbe megabytes
+  pop %bx
+  mov $1024, %bx
+  call div32
+  mov $'G', %si
+  push %si
+megabytes:
+  push %ds
+  mov $0, %bx
+  mov %bx, %ds
+  call print_num
+  pop %ds
+
+  pop %dx
+
+  push %ds
+  mov $0, %bx
+  mov %bx, %ds
+  call putchar_
+  pop %ds
+
+  pop %cx
+  
+  
+  /* ID */
+
+  /* Formato */
+  push %ds
+  mov $0, %bx
+  mov %bx, %ds
+  mov (cPos), %ax
+  mov $0, %dx
+  mov $160, %bx
+  div %bx
+  mov $160, %bx
+  mul %bx
+  add $114, %ax
   mov %ax, (cPos)
   pop %ds
   
@@ -220,7 +272,6 @@ fin_linea:
   pop %cx
   inc %cx
   jmp mbr_print
-
 
 mbr_print_fin:
   
