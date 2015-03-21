@@ -50,4 +50,4 @@ diskok:
 diskread:
   .asciz "Disco leido"
 Tabla:
-  .asciz "Boot  Start          End           Sectors        Size   Id"
+  .asciz "Entry  Boot  Start          End           Sectors        Size   Id"

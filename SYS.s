@@ -16,11 +16,16 @@ load_MBR:
   mov $0x80, %dx    # hhd (usar bootdrive)
   int $0x13
 
-  jc disk_error_
+  jc disk_error
   jmp disk_read
 
+disk_error:
+  xor %cx, %cx
 disk_error_:
-    
+  cmp $3, %cx
+  je disk_unreadable
+  inc %cx
+  
   mov $0, %ax
   mov $0x80, %dl
   int $0x13
@@ -28,21 +33,16 @@ disk_error_:
   jc disk_error_
   jmp load_MBR
 
-/*
-disk_error:
+disk_unreadable:
   
   mov $diskerror, %si
   call writeString
   call newLine
   
   call reboot
-*/  
+
 disk_read:
-
-  #lea diskread, %si
-  #call writeString
-  #call newLine
-
+  
   call newLine
     
   lea Tabla, %si
@@ -78,23 +78,76 @@ mbr_print:
   add %ax, %di
   
 testprint:   
+  
+  push %ds
+  mov $0, %bx
+  mov %bx, %ds
+  mov %cx, %ax
+  inc %ax
+  mov $0, %dx
+  call print_num
+  pop %ds
 
+  /* Formato */
+  push %ds
+  mov $0, %ax
+  mov %ax, %ds
+  mov (cPos), %ax
+  mov $0, %dx
+  mov $160, %bx
+  div %bx
+  mov $160, %bx
+  mul %bx
+  add $14, %ax
+  mov %ax, (cPos)
+  #pop %bx
+  #mov %bx, %ds
+  pop %ds
+  
   /* Booteable */
   mov $0x980, %ax
   mov %ax, %ds
   mov $0, %ax
   movb 0(%di), %al
   cmp $0x80, %al
-  jne notequal
+  jne not_bootable
 
   push %ds
   mov $0, %bx
   mov %bx, %ds
-  mov $'*', %dl
+  mov $'B', %dl
   call putchar_
   pop %ds
+  jmp end_boot
   
-notequal:
+not_bootable:
+  mov $0x980, %ax
+  mov %ax, %ds
+  mov $0, %ax
+  movb 0(%di), %al
+  cmp $0, %al
+  je inactive
+
+  push %ds
+  mov $0, %bx
+  mov %bx, %ds
+  mov $'-', %dl
+  call putchar_
+  call newLine
+  pop %ds
+  jmp fin_linea
+  
+inactive: 
+  push %ds
+  mov $0, %bx
+  mov %bx, %ds
+  mov $'I', %dl
+  call putchar_
+  pop %ds
+end_boot: 
+  
+  
+
 
   /* Start */
   
@@ -108,7 +161,7 @@ notequal:
   div %bx
   mov $160, %bx
   mul %bx
-  add $12, %ax
+  add $26, %ax
   mov %ax, (cPos)
   #pop %bx
   #mov %bx, %ds
@@ -137,7 +190,7 @@ start:
   div %bx
   mov $160, %bx
   mul %bx
-  add $42, %ax
+  add $56, %ax
   mov %ax, (cPos)
   pop %ds
 
@@ -174,7 +227,7 @@ no_cero:
   div %bx
   mov $160, %bx
   mul %bx
-  add $70, %ax
+  add $84, %ax
   mov %ax, (cPos)
   pop %ds
   
@@ -199,7 +252,7 @@ no_cero:
   div %bx
   mov $160, %bx
   mul %bx
-  add $100, %ax
+  add $114, %ax
   mov %ax, (cPos)
   pop %ds
 
@@ -247,7 +300,7 @@ megabytes:
   div %bx
   mov $160, %bx
   mul %bx
-  add $114, %ax
+  add $128, %ax
   mov %ax, (cPos)
   pop %ds
   
@@ -267,12 +320,15 @@ testss:
 
   call newLine
   pop %ds
+
 fin_linea:
 
+  
   pop %cx
   inc %cx
   jmp mbr_print
 
+  
 mbr_print_fin:
   
   popa
