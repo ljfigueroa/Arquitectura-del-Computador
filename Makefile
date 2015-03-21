@@ -11,11 +11,11 @@ BootLoader.bin: BootLoader.s IO.s
 	objcopy -O binary -j .text BootLoader.out BootLoader.bin
 
 MBRLoader.bin: MBRLoader.s IO.s SYS.s
-	as -o MBRLoader.o BootLoader.s
+	as -o MBRLoader.o MBRLoader.s
 	ld -o MBRLoader.out MBRLoader.o -Ttext 0x7e00
 	objcopy -O binary -j .text MBRLoader.out MBRLoader.bin
 
 
 .PHONY : clean
 clean:
-	-rm boot.bin $(objects)
+	-rm boot.bin $(objects) BootLoader_.bin
