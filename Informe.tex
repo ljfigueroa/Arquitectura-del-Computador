@@ -1,0 +1,198 @@
+\documentclass[10pt,oneside,a4paper]{article}
+\usepackage{xltxtra} % Para usar características avanzadas de XeLaTeX, como elegir la fuente.
+ 
+\usepackage{polyglossia} % Un sustituto de babel.
+\setdefaultlanguage{spanish}
+\usepackage{indentfirst} % Necesario para que sangre la primera línea de los primeros párrafos.
+ 
+\defaultfontfeatures{Mapping=tex-text,Ligatures=Common} % Para que funcionen cosas como --- y las ligaduras.
+
+\usepackage{hyperref}
+%\usepackage{showframe}
+\usepackage[top=2in, bottom=1.5in, left=1.5in, right=1in]{geometry}
+%\usepackage{}
+%\setmainfont{CMU Serif} % Ésta hay que descargarla. Si no, puedes usar la Linux Libertine.
+%\setsansfont{CMU Sans Serif}
+%\setmonofont{CMU Typewriter Text}
+%\setmainfont{Linux Libertine 0}
+%\setsansfont{Linux Biolinum O}
+%\setmonofont{Inconsolata}
+
+
+%\usepackage[pdftex]{graphicx}
+
+\newcommand{\HRule}{\rule{\linewidth}{0.5mm}}
+
+%\renewcommand\thesection{\arabic{section}}
+
+\title{FDisk}
+\author{Lauro Figueroa}
+\date{1 de Enero de 1970}
+\begin{document}
+ 
+\begin{titlepage}
+\begin{center}
+
+% Upper part of the page. The '~' is needed because \\
+% only works if a paragraph has started.
+\includegraphics[width=0.15\textwidth]{./Logo.jpg}~\\[1cm]
+
+\textsc{\LARGE Facultad de Ciencias Exactas, Ingeniería y Agrimensura}\\[1.5cm]
+
+\textsc{\Large Trabajo final}\\[0.5cm]
+
+% Title
+\HRule \\[0.4cm]
+{ \huge \bfseries Live FDisk \\[0.4cm] }
+
+\HRule \\[1.5cm]
+
+% Author and supervisor
+\noindent
+\begin{minipage}{0.4\textwidth}
+\begin{flushleft} \large
+\emph{Alumno:}\\
+Lauro \textsc{Figueroa}
+\end{flushleft}
+\end{minipage}%
+\begin{minipage}{0.4\textwidth}
+\begin{flushright} \large
+\emph{Profesores:} \\
+Dr.Esteban \textsc{Ruiz}\\
+Dr.Federico \textsc{Bergero}\\
+Dr.Diego \textsc{Feroldi}
+\end{flushright}
+\end{minipage}
+
+\vfill
+
+% Bottom of the page
+{\large \today}
+
+\end{center}
+\end{titlepage}
+
+%\maketitle
+\newpage 
+
+\section*{Introdución}
+
+
+\begin{center}
+¿Por que elegí FDisk como trabajo final?
+\end{center}
+La elección fue sencilla, desde el comienzo de la carrera uno va aprendiendo
+como un sistema operativo funciona, en cambio como es iniciado es algo
+que desconocia completamente y de ahí se deriva el porque
+de la elección de este trabajo final por sobre los otros.
+
+
+%\setcounter{section}{0}
+\section{Desarrollo y ejecución}
+
+La ejecución de los objetivos los clasifique en tres partes bien definidas para
+poder entender e implemtar de forma sencilla cada uno de ellos.
+
+\subsection{Inicio y requerimientos para el arranque}
+La primera parte consistió en entender como se inicializaba un procesador i386 y
+como generar un programa assembler que sea ejecutable por el mismo. En un breve
+resumen, el programa deberá ser un binario plano generado a partir de código assembler
+16bits, con un tamaño de 512 bytes (tamaño de un sector) donde los dos ultimos bytes del mismo
+deben ser el hexadecimal AA55h,
+tambien llamado firma para que la BIOS lo reconosca como un gestor de arranque.
+La BIOS carga el sector a la dirección de memoria 0x7C00 y luego salta a la
+misma para ejecutar el programa.
+\subsection{Impresión en pantalla.}
+La primera vez que imprimí por pantalla fue un Hola mundo!
+(como no podria ser de otra forma),
+lo hice usando la llamada  INT 0x10 de la BIOS.
+El algoritmo usado en escencialmente el mismo que el entregado ahora, la
+funcion writeString leia de memoria la cadena asciz apuntada por \%si e iba
+imprimiendo cada caracter hasta leer un 0. Pero
+como debia que proveer varias funciones para imprimir en pantalla, cada
+una con propositos diferentes, abstraje de la implementación de writeString
+la función putchar, la cual imprime un caracter por pantalla. Esto a demas
+de permitir implementar facilmente print-hex y print-num, hizo que agregar
+caracteristica adicionales fuera sencillo, pues al transicionar a imprimir
+por pantalla accediendo a la memoria de video solo tuve que cambiar la
+función putchar.
+
+Como mencione, una cadena de caracteres no es lo único que necesite
+mostrar por pantalla, un problema que encontre
+implementando la función que imprime números decimales de hasta 32bit de tamaño,
+fue que el algoritmo por el cual obtengo los digitos del número usaba la
+instrucción div del 8086 que toma sus valores en los registros
+\%dx:\%ax como su dividendo de 32bits y guarda el modulo en \%dx y
+el cociente en \%ax ambos de 16bits, imponiendo un limite sobre el tamaño del
+dividendo para no generar un overflow al tratar de guardar el cociente
+en el registro \%ax.
+El algoritmo que implemente divide por diez el número a mostrar tantas veces
+como cifras tenga, sea el siguiente un ejemplo del problema:
+\%dx:\%ax posee FFFFFFFFh y el divisor es Ah (diez en decimal),
+esto produce un error al dividir
+pues el cociente es 19999999h y no entra en un registro de 16bits.
+
+Para solucionarlo implemente la funcion div32 que se
+encarga de dividir un numero 32bit pasado como argumento en los mismos registros
+como lo hacia para div y como única restricción que el divisor debe estar en
+el registro \%bx devolviendo el cociente como un número 32bits en \%dx:\%ax
+y el resto en \%bx.
+
+\subsection{Leer sectores del disco.}
+La tercer parte fue la mas delicada, consistio en leer de distintos discos,
+tanto el usb del cual se carga el gestor de arranque como del disco rigido
+donde esta el MBR y lidiar con dos errores.
+El primero fue generado por la instrucción INT 0x13 con el argumento
+0 en el registro \%cx que es donde se especifica de que sector se
+comienza a leer, levantando la bandera de acarreo despues de la operación
+indicaba que un error se habia producido y 
+analizando el valor devuelto en \%al y comparandolo con la lista de posibles
+\href{http://www.pelletiernet.com/helppc/int_13-1.html}{errores},
+arrojaba el error 'bad comand pass to the driver'
+dado que se comienza del sector 1 usando la lectura en modo CHS.
+Aunque el error mas dificil de diagnosticar fue el cometido por mi propia mano
+al no calcular la direccion efectiva de memoria donde guardaba los datos que
+estaba leyendo, los mismo se superponian con una parte del stack.
+Para poder encontrarlo use las herramientas que ofrece gdb con qemu
+en donde analizando la memoria donde se guardaba, note mi error.
+
+\section{Tabla de particiones y su lugar en el esquema de desarrollo presentado.}
+
+Imprimir la tabla de particiones fue sencillo una vez que tenia implementado
+lo descripto anteriormente.
+El diseño de la tabla impresa en pantalla fue directamente influenciado por
+el como programa fdisk muestra en una terminal la misma informacion a
+analizar.
+
+Ahora mostrare como se imprime una entrada cualquiera
+de las cuatro posibles de la tabla de particiones, ademas de explicitar si
+cambie o hice abuso de la notación convencional.
+
+El campo de columna Boot en el formato propuesto se obtione del primer
+byte de la entrada en la tabla de
+particiones, éste contiene la informacion del estado de la partición:
+
+\begin{itemize}
+\item 0x80 esta activa / es booteable, 
+\item 0x00 esta inactiva / no es booteable
+\item 0x01- 0x7F es una entrada invalida.
+\end{itemize}
+
+En la representacion que ofresco los muestro como 'B', 'I' y '-'
+respectivamente.\\
+
+La lectura del primer sector en la particion tanto como la cantidad de sectores,
+lo hago usando el campo LBA y no CHS debido al limite de direccionamiento de 
+CHS que es de 8GB por disco y en mi caso es de 1TB lo que hace imposible 
+que se pueda guardar
+esa información en los campos CHS y deba leer los campo LBA cuyo tamaño es
+de 32bits, ie dos bytes, permitiendo representar hasta 2TB.
+
+\section*{Bibliografia}
+
+
+\href{http://susam.in/articles/boot-sector-code/}{Susam In}\\
+\href{http://www.pelletiernet.com/helppc/int_13-2.html}{INT 13}\\
+\href{http://en.wikipedia.org/wiki/Master_boot_record}{MBR wiki}
+
+\end{document}
