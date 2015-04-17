@@ -323,14 +323,19 @@ testss:
 
 fin_linea:
 
-  
   pop %cx
   inc %cx
   jmp mbr_print
 
   
 mbr_print_fin:
+  push %ds
+  mov $0, %bx
+  mov %bx, %ds
   
+  call newLine
+  call reboot  
+
   popa
   ret
 

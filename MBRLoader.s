@@ -25,6 +25,7 @@ smbr:
 
   /* Cargo en memoria e imprimo la MBR */
   call get_mbr
+  #call reboot
 
 idle:
   hlt
